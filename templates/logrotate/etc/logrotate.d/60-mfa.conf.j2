@@ -1,0 +1,20 @@
+{{ log_path }}/mfa/*/*.log
+{
+        rotate 181
+        dateext
+        dateformat .%Y-%m-%d
+        daily
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+                docker restart privacy_idea
+                docker restart mfaapi
+                docker restart mfapgbouncer
+                docker restart oauth2proxy
+                docker restart oauth2proxymfa
+                invoke-rc.d rsyslog rotate > /dev/null
+        endscript
+}

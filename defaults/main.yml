@@ -1,0 +1,95 @@
+---
+# defaults file for cesnet.proxyaai
+
+# Indicator if MitreID should be deployed
+components_mitreid: "enabled"
+
+# Indicator if MFAAPI component should be deployed
+components_mfaapi: "disabled"
+
+# Indicator if ProxyIdP GUI component should be deployed
+components_proxyidp_gui: "disabled"
+
+# Indicator if LDAP component should be deployed
+components_ldap: "disabled"
+
+# Indicator if Meta monitoring component should be deployed
+components_meta_monitoring: "disabled"
+
+# Indicator if KRB Exchanger component should be deployed
+components_krb_exchanger: "disabled"
+
+# Indicator if GA4GH Broker component should be deployed
+components_ga4gh_broker: "disabled"
+
+reverseproxy_docker_compose_template: "reverseproxy/docker-compose.yml"
+
+firewall_custom_rules: []
+
+mfaapi_docker_compose_template: "mfaapi/docker-compose.yml"
+
+# List of cronjobs for MFA
+# - { name: "NAME", job: "CMD", minute: "MINUTE", hour: "HOUR"}
+mfa_cronjobs: []
+
+mfa_no_token_text:
+  en: -|
+    privacyIDEA is a system to manage your tokens.
+    You currently have no token assigned.
+    You can manage your MFA tokens here - you can register new tokens,
+    disable tokens, revoke tokens or even delete tokens.
+  cs: -|
+    privacyIDEA je systém pro správu tokenů.
+    Momentálně nemáte registrovaný žádný token.
+    V tomto systému můžete spravovat své tokeny pro vícefázové ověření,
+    můžete registrovat nové tokeny nebo nechtěné tokeny deaktivovat,
+    revokovat či odstranit.
+
+# List of users to create on the host machine
+# -{ name: "NAME", uid: 000 }
+host_users: []
+
+mitreid_generate_keystore: true
+
+force: false
+
+ldap_force_init: false
+
+ldap_root: "dc=example,dc=org"
+
+# List of entries to fill into the /etc/hosts file
+stack_extra_hosts: []
+
+monitoring_oracle: false
+
+proxyidp_gui_cronjobs: []
+
+############################
+# Configuration for MFAAPI #
+############################
+
+# Main directory
+mfaapi_path: "/opt/mfaapi"
+
+# Default owner: root
+# Default group: root
+# Default mode: 0755
+mfaapi_dirs:
+  - { path: "{{ mfaapi_path }}" }
+  - { path: "{{ log_path }}/mfaapi" }
+
+# src - required
+# dest - relative to {{ mfaapi_path }} - default value {{ src }}
+# Default owner: root
+# Default group: root
+# Default mode: 0644
+mfaapi_files: []
+
+# src - required
+# dest - relative to {{ mfaapi_path }} - default value {{ src }}
+# Default owner: root
+# Default group: root
+# Default mode: 0644
+mfaapi_templates:
+  - { src: "mfaapi/config.json", dest: "config.json" }
+############################

@@ -1,0 +1,98 @@
+---
+- name: install monitoring dependencies
+  apt:
+    name:
+      - python3-pip
+      - python3-dev
+      - libldap2-dev
+      - libsasl2-dev
+      - needrestart
+      - unzip
+      - libaio1
+    state: present
+    update_cache: yes
+
+- name: create users
+  user:
+    name: "{{ monitoring_user }}"
+    shell: /bin/bash
+
+- name: ensure groups
+  group:
+    name: "{{ monitoring_group }}"
+
+- name: ensure users in groups
+  user:
+    name: "{{ monitoring_user }}"
+    group: "{{ monitoring_group }}"
+
+- name: install perun.proxy.utils
+  become: true
+  become_user: "{{ monitoring_user }}"
+  pip:
+    executable: /usr/bin/pip3
+    name:
+      - 'perun.proxy.utils[postgresql{{ ",oracle" if monitoring_oracle }}]'
+    state: present
+    version: "{{ perun_proxy_utils_version }}"
+
+- name: Create /opt/instantclient if it does not exist
+  ansible.builtin.file:
+    path: /opt/instantclient
+    state: directory
+    mode: "0755"
+    owner: monitoring
+    group: monitoring
+- name: Download instantclient-basiclite-linux
+  ansible.builtin.unarchive:
+    src: https://download.oracle.com/otn_software/linux/instantclient/2114000/instantclient-basiclite-linux.x64-21.14.0.0.0dbru.zip
+    dest: /opt/instantclient/
+    remote_src: yes
+    owner: monitoring
+    group: monitoring
+- name: Download instantclient-sdk-linux
+  ansible.builtin.unarchive:
+    src: https://download.oracle.com/otn_software/linux/instantclient/2114000/instantclient-sdk-linux.x64-21.14.0.0.0dbru.zip
+    dest: /opt/instantclient/
+    remote_src: yes
+    owner: monitoring
+    group: monitoring
+- name: Download instantclient-sqlplus-linux
+  ansible.builtin.unarchive:
+    src: https://download.oracle.com/otn_software/linux/instantclient/2114000/instantclient-sqlplus-linux.x64-21.14.0.0.0dbru.zip
+    dest: /opt/instantclient/
+    remote_src: yes
+    owner: monitoring
+    group: monitoring
+- name: add Oracle client to LD_LIBRARY_PATH
+  ansible.builtin.copy:
+    content: |
+      /opt/instantclient/instantclient_21_14
+    dest: /etc/ld.so.conf.d/oracle-instantclient.conf
+
+###### USE AFTER CHECK_MK USE MONITORING_USER INSTEAD OF ROOT #####
+#- name: create link to run_probes
+#  file:
+#    src: "/home/{{ monitoring_user }}/bin/run_probes"
+#    dest: "/usr/lib/check_mk_agent/local/run_probes"
+#    owner: monitoring
+#    group: monitoring
+#    state: link
+#    mode: 0751
+
+###### REMOVE AFTER CHECK_MK USE MONITORING_USER INSTEAD OF ROOT #####
+- name: copy root_run_monitoring.sh
+  template:
+    src: "root_run_monitoring.sh.j2"
+    dest: "/usr/lib/check_mk_agent/local/root_run_monitoring.sh"
+    owner: root
+    group: root
+    mode: 0711
+
+- name: copy run_probes config
+  template:
+    src: "{{ run_probes_cfg_template_path }}"
+    dest: "/etc/run_probes_cfg.yaml"
+    owner: root
+    group: root
+    mode: 0611

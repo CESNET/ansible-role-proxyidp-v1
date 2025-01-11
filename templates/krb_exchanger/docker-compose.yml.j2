@@ -1,0 +1,34 @@
+{{ ansible_managed | comment}}
+{% set config = krb_exchanger_template.docker_compose_yml %}
+
+services:
+  krb_exchanger:
+    image: {{ config.image }}
+    container_name: krb-exchanger
+    environment:
+      - PBS_K525_KEYTAB=/app/oidc.keytab
+      - PBS_K525_USER={{ config.krb_exchanger_user }}
+    volumes:
+      - {{ config.krb_exchanger_path }}/config.yaml:/app/oidc2krb/config.yaml:ro
+      - {{ config.krb_exchanger_path }}/oidc.keytab:/app/oidc.keytab:ro
+{% for volume in config.custom_volumes | default([]) %}
+      - {{ volume }}
+{% endfor %}
+    restart: always
+    networks:
+      - {{ config.network }}
+    logging:
+      driver: "syslog"
+      options:
+        tag: "proxyaai/krb-exchanger"
+{% if config.extra_hosts is defined and config.extra_hosts %}
+    extra_hosts:
+{% for host in config.extra_hosts | default([]) %}
+      - {{ host }}
+{% endfor %}
+
+{% endif %}
+networks:
+  {{ config.network }}:
+    name: {{ config.network }}
+    external: true

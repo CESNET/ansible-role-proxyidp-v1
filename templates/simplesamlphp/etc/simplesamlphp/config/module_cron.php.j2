@@ -1,0 +1,18 @@
+<?php
+
+{{ ansible_managed | comment }}
+{% set config = simplesamlphp_template.module_cron_php %}
+
+
+/* 
+ * Configuration for the Cron module.
+ */
+
+$config = [
+
+    'key' => '{{ config.cron_key }}',
+    'allowed_tags' => ['daily', 'hourly', 'frequent'],
+    'debug_message' => true,
+    'sendemail' => false,
+
+];

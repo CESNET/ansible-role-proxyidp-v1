@@ -1,0 +1,62 @@
+---
+- name: "KRB EXCHANGER - Ensure that directory are created"
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+    state: directory
+  loop: "{{ krb_exchanger_dirs }}"
+
+- name: "KRB EXCHANGER - Copy files"
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ krb_exchanger_path }}/{{ item.dest | default(item.src) }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop: "{{ krb_exchanger_files }}"
+  notify: "docker krb_exchanger restart"
+
+- name: "KRB EXCHANGER - Create files from template"
+  template:
+    src: "{{ item.src }}.j2"
+    dest: "{{ krb_exchanger_path }}/{{ item.dest | default(item.src) }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop: "{{ krb_exchanger_templates }}"
+  notify: "docker krb_exchanger restart"
+
+- name: "KRB EXCHANGER - Create docker-compose.yml from template"
+  template:
+    src: "{{ krb_exchanger_docker_compose_template }}.j2"
+    dest: "{{ krb_exchanger_path }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - upgrade_docker_containers
+    - krb_exchanger_upgrade_docker_container
+  notify: "docker krb_exchanger restart"
+
+- name: "KRB EXCHANGER - site-specific tasks"
+  when: krb_exchanger_site_specific_tasks is defined
+  include_tasks:
+    file: "files/{{ krb_exchanger_site_specific_tasks }}"
+    apply:
+      tags:
+        - site_specific
+        - krb_exchanger_site_specific
+  tags:
+    - site_specific
+    - krb_exchanger_site_specific
+
+- name: "KRB EXCHANGER - Start docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ krb_exchanger_path }}"
+    state: present
+    pull: always
+  tags:
+    - upgrade_docker_containers
+    - krb_exchanger_upgrade_docker_container

@@ -1,0 +1,18 @@
+{{ ansible_managed | comment}}
+{% set config = mitreid_template.etc.apache2.sites_enabled.default_conf %}
+<VirtualHost *:80>
+        ServerName https://{{ config.hostname }}
+        DocumentRoot /var/www/
+
+        ProxyIOBufferSize 66536
+        LimitRequestFieldsize 65536
+
+        <LocationMatch "^/oidc/(?!token|introspect|userinfo|register|devicecode|jwk|.well-known|logo.png).*">
+           AuthType shibboleth
+           ShibRequireSession Off
+           Require shibboleth
+        </LocationMatch>
+        
+        ProxyPass /oidc/logo.png !
+        ProxyPass /oidc/ ajp://mitreid-tomcat:8009/oidc/
+</VirtualHost>

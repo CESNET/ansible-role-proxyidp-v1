@@ -1,0 +1,112 @@
+---
+{{ ansible_managed | comment }}
+{% set config = ga4gh_broker_template.ga4gh_api_yaml %}
+
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+
+logging:
+  level:
+    root: "info"
+    cz.muni.ics.ga4gh: "debug"
+
+brokers:
+  enabled: {{ config.brokers.enabled | default(False) }}
+  user-identification-attributes:
+{% for uid in config.brokers.user_identification_attributes | default([]) %}
+    - "{{ uid }}"
+{% endfor %}
+  jku: "{{ config.brokers.jku }}"
+  issuer: "{{ config.brokers.issuer }}"
+  path-to-jwk-file: "/etc/ga4gh-broker/jwks-keystore.jwks"
+  instances:
+{% for broker in config.brokers.instances | default([]) %}
+    - name: "{{ broker.name }}"
+      instance-class: "{{ broker.instance_class }}"
+      visa-issuer: "{{ broker.visa_issuer }}"
+      identifier-attribute: "{{ broker.identifier_attribute }}"
+      membership-vo-id: {{ broker.membership_vo_id }}
+      # BONA FIDE STATUS
+      bona-fide-status-attr: "{{ broker.bona_fide_status.attr }}"
+{% if 'rems_attr' in broker.bona_fide_status %}
+      bona-fide-status-rems-attr: "{{ broker.bona_fide_status.rems_attr }}"
+{% endif %}
+      # TERMS AND POLICIES
+      terms-and-policies-group-id: {{ broker.terms_and_policies_group_id }}
+      # MANUAL AFFILIATIONS
+      group-affiliations-attr: "{{ broker.group_affiliations.attr }}"
+      group-affiliations-org-url-attr: "{{ broker.group_affiliations.org_url_attr }}"
+      group-affiliations-group-member-expiration-attr: "{{ broker.group_affiliations.group_member_expiration_attr }}"
+      group-affiliations-vo-id: {{ broker.group_affiliations.vo_id }}
+      group-affiliations-root-group-id: {{ broker.group_affiliations.root_group_id }}
+      # UES AFFILIATIONS
+      ues-affiliations-attr: "{{ broker.ues_affiliations_attr }}"
+      passport-repositories:
+{% for repo in broker.passport_repositories | default([]) %}
+        - name: "{{ repo.name }}"
+          url: "{{ repo.url }}"
+          jwks: "{{ repo.jwks }}"
+          headers:
+{% for header in repo.headers | default([]) %}
+            - { header: "{{ header.header }}", value: "{{ header.value }}" }
+{% endfor %}
+{% endfor %}
+{% endfor %}
+
+perun:
+  enabled: {{ config.perun.enabled | default(False) }}
+{% if config.perun.enabled %}
+  rpc-url: "{{ config.perun.rpc.url }}"
+  username: "{{ config.perun.rpc.user }}"
+  password: "{{ config.perun.rpc.password }}"
+  serializer: "json"
+{% endif %}
+
+visa-writers:
+  enabled: {{ config.visa_writers.enabled | default(False) }}
+{% if config.visa_writers.enabled %}
+  db:
+    url: "{{ config.visa_writers.db.url }}"
+    username: "{{ config.visa_writers.db.user }}"
+    password: "{{ config.visa_writers.db.password }}"
+    driver: "{{ config.visa_writers.db.driver }}"
+  repositories:
+{% for repo in config.visa_writers.repositories | default([]) %}
+    - name: "{{ repo.name }}"
+      jwks: "{{ repo.jwks }}"
+      auth:
+{% for auth in repo.auth | default([]) %}
+{% if auth.name == "api-key" %}
+          api-key:
+            api-key-header: "{{ auth.api_key_header }}"
+            api-key-value: "{{ auth.api_key_value }}"}}"
+{% elif auth.name == "basic-auth" %}
+          basic-auth:
+            username: "{{ auth.username }}"
+            password: "{{ auth.password }}"
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+passport-v1-2:
+  enabled: {{ config.passport_v1_2.enabled | default(False) }}
+{% if config.passport_v1_2.enabled %}
+  auth:
+    introspection-client-id: "{{ config.passport_v1_2.auth.introspection_client_id }}"
+    introspection-client-secret: "{{ config.passport_v1_2.auth.introspection_client_secret }}"
+    introspection-uri: "{{ config.passport_v1_2.auth.introspection_uri }}"
+{% endif %}
+
+passport-v1-0:
+  enabled: {{ config.passport_v1_0.enabled | default(False) }}
+{% if config.passport_v1_0.enabled %}
+  auth:
+{% for auth in config.passport_v1_0.auth | default([]) %}
+    - { username: "{{ auth.username }}", password: "{{ auth.password }}" }
+{% endfor %}
+{% endif %}

@@ -1,0 +1,139 @@
+{% if components_krb_exchanger == "enabled" %}
+# KRB Exchanger
+{{ log_path }}/krb_exchanger/krb_exchanger.log
+{
+        rotate 181
+        dateext
+        dateformat .%Y-%m-%d
+        daily
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+                sleep $(shuf -i5-60 -n1) && docker restart krb-exchanger
+                invoke-rc.d rsyslog rotate > /dev/null
+        endscript
+}
+{% endif %}
+
+{% if components_ga4gh_broker == "enabled" %}
+# GA4GH Broker
+{{ log_path }}/ga4gh_broker/ga4gh_broker.log
+{
+        rotate 181
+        dateext
+        dateformat .%Y-%m-%d
+        daily
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+                sleep $(shuf -i5-60 -n1) && docker restart ga4gh_broker
+                invoke-rc.d rsyslog rotate > /dev/null
+        endscript
+}
+{% endif %}
+
+{% if components_mitreid == "enabled" %}
+# MitreID
+{{ log_path }}/mitreid/mitreid.log
+{
+        rotate 181
+        dateext
+        dateformat .%Y-%m-%d
+        daily
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+                sleep $(shuf -i5-60 -n1) && docker restart mitreid-tomcat
+                invoke-rc.d rsyslog rotate > /dev/null
+        endscript
+}
+{% endif %}
+
+# SSP
+{{ log_path }}/simplesamlphp/*.log
+{{ log_path }}/simplesamlphp/*/*.log
+{
+        rotate 181
+        dateext
+        dateformat .%Y-%m-%d
+        daily
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+                sleep $(shuf -i5-60 -n1) && docker restart simplesamlphp
+                invoke-rc.d rsyslog rotate > /dev/null
+        endscript
+}
+
+# Reverseproxy
+{{ log_path }}/reverseproxy/*.log
+{{ log_path }}/reverseproxy/*/*.log
+{
+        rotate 181
+        dateext
+        dateformat .%Y-%m-%d
+        daily
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+                sleep $(shuf -i5-60 -n1) && docker restart reverseproxy
+                invoke-rc.d rsyslog rotate > /dev/null
+        endscript
+}
+
+{% if components_exabgp == "enabled" %}
+#ExaBGP
+{{ log_path }}/exabgp/*.log
+{
+        rotate 14
+        dateext
+        dateformat .%Y-%m-%d
+        daily
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+                sleep $(shuf -i5-60 -n1) && docker restart exabgp
+                invoke-rc.d rsyslog rotate > /dev/null
+        endscript
+}
+{% endif %}
+
+{% if components_pgbouncers == "enabled" %}
+{% for pgbouncer in pgbouncers_instances %}
+# PGBouncers - {{ pgbouncer }}
+{{ log_path }}/{{pgbouncer}}/*.log
+{
+        rotate 14
+        dateext
+        dateformat .%Y-%m-%d
+        daily
+        missingok
+        notifempty
+        compress
+        delaycompress
+        sharedscripts
+        postrotate
+                sleep $(shuf -i5-60 -n1) && docker restart {{ pgbouncer }}
+                invoke-rc.d rsyslog rotate > /dev/null
+        endscript
+}
+{% endfor %}
+{% endif %}

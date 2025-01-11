@@ -1,0 +1,123 @@
+---
+- name: "LDAP - Ensure that all required packages are installed"
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "python3-ldap"
+
+- name: "LDAP - delete docker"
+  community.docker.docker_container:
+    name: openldap
+    state: absent
+  when: ldap_force_init == True
+
+- name: "LDAP - delete data"
+  file:
+    state: absent
+    path: /ldap/data/
+  when: ldap_force_init == True
+
+- name: "LDAP - Ensure that directory are created"
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+    state: directory
+  loop: "{{ ldap_dirs }}"
+
+- name: "LDAP - Copy files"
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ ldap_path }}/{{ item.dest | default(item.src) }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop: "{{ ldap_files }}"
+  notify: "docker ldap restart"
+
+- name: "LDAP - Create files from template"
+  template:
+    src: "{{ item.src }}.j2"
+    dest: "{{ ldap_path }}/{{ item.dest | default(item.src) }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop: "{{ ldap_templates }}"
+  notify: "docker ldap restart"
+
+- name: "LDAP - Create docker-compose.yml from template"
+  template:
+    src: "{{ ldap_docker_compose_template }}.j2"
+    dest: "{{ ldap_path }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - upgrade_docker_containers
+    - ldap_upgrade_docker_container
+  notify: "docker ldap restart"
+
+- name: "LDAP - site-specific tasks"
+  when: ldap_site_specific_tasks is defined
+  include_tasks:
+    file: "files/{{ ldap_site_specific_tasks }}"
+    apply:
+      tags:
+        - site_specific
+        - ldap_site_specific
+  tags:
+    - site_specific
+    - ldap_site_specific
+
+- name: "LDAP - Start docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ ldap_path }}"
+    state: present
+    pull: always
+  tags:
+    - upgrade_docker_containers
+    - ldap_upgrade_docker_container
+
+- name: "LDAP - wait for startup"
+  ansible.builtin.pause:
+    seconds: 5
+  when: ldap_force_init == True
+
+# work around a bug in replication (the object will be re-created automatically)
+- name: "LDAP - delete top level object"
+  community.general.ldap_entry:
+    state: absent
+    dn: "{{ ldap_root }}"
+    server_uri: "ldaps://{{ hostname }}:636"
+    bind_dn: "cn=admin,{{ ldap_root }}"
+    bind_pw: "{{ vault_perun_ldap_password }}"
+    recursive: true
+  when: ldap_force_init == True
+
+- name: "LDAP - start replication"
+  community.docker.docker_container_exec:
+    container: openldap
+    command: /bin/bash -c "/opt/bitnami/openldap/bin/ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /tmp/ldif/init.ldif"
+    chdir: /opt/bitnami
+  register: result
+  when: ldap_force_init == True
+
+- name: "LDAP - print stdout from replication start"
+  debug:
+    var: result.stdout
+  when: ldap_force_init == True
+
+- name: "LDAP - set up indexes"
+  community.docker.docker_container_exec:
+    container: openldap
+    command: /bin/bash -c "/opt/bitnami/openldap/bin/ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f /tmp/ldif/indexes.ldif"
+    chdir: /opt/bitnami
+  register: result
+  when: ldap_force_init == True
+
+- name: "LDAP - print stdout from index setup"
+  debug:
+    var: result.stdout
+  when: ldap_force_init == True

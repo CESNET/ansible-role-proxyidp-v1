@@ -1,0 +1,4 @@
+<Context docBase="perun-ga4gh-broker.war">
+        <Parameter name="spring.config.location" value="/etc/ga4gh-broker/" />
+        <Parameter name="spring.config.name" value="ga4gh-api" />
+</Context>

@@ -1,0 +1,38 @@
+{% set config = mfaapi_template.config_json %}
+{
+    "issuer": "{{ config.issuer }}",
+    "clientID": "{{ config.client_id }}",
+    "clientSecret": "{{ config.client_secret}}",
+    {% if config.user_id_claim is defined %}
+    "userIdClaim": "{{ config.user_id_claim }}",
+    {% endif %}
+    "proxyIdentifier": "{{ config.proxy_identifier }}",
+    "acrMFA": "https://refeds.org/profile/mfa",
+    "rpcURL": "{{ config.perun_rpc.url }}/",
+    "rpcUser": "{{ config.perun_rpc.user }}",
+    "rpcPassword": "{{ config.perun_rpc.password }}",
+    "attributeNamespace": "urn:perun:user:attribute-def:def",
+    "localPartOnly": {{ config.local_part_only | default('false') | to_json}},
+    "usernameAttribute": "{{ config.username_attribute }}",
+    "proxyIdentifiersAttribute": "{{ config.attribute_names.proxy_identifiers }}",
+    {% if config.attribute_names.rp_categories is defined %}
+    "rpCategoriesAttribute": "{{ config.attribute_names.rp_categories }}",
+    {% endif %}
+    "attributes": {
+{% if config.attributes is defined %}
+{% for key,attribute in config.attributes.items() | default('[]')%}
+        "{{ key }}": {
+            "id": {{ attribute.id }},
+            "name": "{{ attribute.name }}",
+            "type": "{{ attribute.type }}"
+        }{{ ", " if not loop.last else "" }}
+{% endfor %}
+{% endif %}
+    },
+    "privacyIDEA": {
+        "serverURL": "{{ config.server_url }}",
+        "serviceAccount": "{{ config.service_user }}",
+        "servicePass": "{{ config.service_password }}",
+        "serviceRealm": "{{ config.service_realm }}"
+    }
+}

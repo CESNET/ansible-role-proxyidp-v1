@@ -1,0 +1,38 @@
+{{ ansible_managed | comment }}
+{% set config = simplesamlphp_template.docker_compose_yml %}
+
+services:
+  simplesamlphp:
+    image: {{ config.image }}
+    container_name: simplesamlphp
+    restart: always
+    volumes:
+      - {{ config.simplesamlphp_path }}/etc/simplesamlphp:/etc/simplesamlphp
+      - {{ config.simplesamlphp_path }}/data:/var/simplesamlphp/data
+      - {{ config.log_path }}:/var/simplesamlphp/log
+      - simplesamlwww:/var/simplesamlphp/www
+{% for volume in config.custom_volumes | default([]) %}
+      - {{ volume }}
+{% endfor %}
+    networks:
+      - {{ config.network }}
+    logging:
+      driver: "syslog"
+      options:
+        tag: "proxyaai/simplesamlphp"
+        syslog-facility: "local7"
+{% if config.extra_hosts is defined and config.extra_hosts %}
+    extra_hosts:
+{% for host in config.extra_hosts | default([]) %}
+      - {{ host }}
+{% endfor %}
+     
+{% endif %}
+networks:
+  {{ config.network }}:
+    name: {{ config.network }}
+    external: true
+
+volumes:
+  simplesamlwww:
+    external: true

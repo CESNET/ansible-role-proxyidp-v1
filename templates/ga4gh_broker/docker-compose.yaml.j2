@@ -1,0 +1,32 @@
+{{ ansible_managed | comment}}
+{% set config = ga4gh_broker_template.docker_compose_yml %}
+
+version: '3'
+services:
+  ga4gh_broker:
+    image: {{ config.image }}
+    container_name: ga4gh_broker
+    volumes:
+      - {{ config.ga4gh_broker_path }}/etc/ga4gh-broker:/etc/ga4gh-broker
+      - {{ config.ga4gh_broker_path }}/perun-ga4gh-broker.xml:/usr/local/tomcat/conf/Catalina/localhost/perun-ga4gh-broker.xml:ro
+{% for volume in config.custom_volumes | default([]) %}
+      - {{ volume }}
+{% endfor %}
+    restart: always
+    networks:
+      - {{ config.network }}
+    logging:
+      driver: "syslog"
+      options:
+        tag: "proxyaai/ga4gh_broker"
+{% if config.extra_hosts is defined and config.extra_hosts %}
+    extra_hosts:
+{% for host in config.extra_hosts | default([]) %}
+      - {{ host }}
+{% endfor %}
+
+{% endif %}
+networks:
+  {{ config.network }}:
+    external:
+      name: {{ config.network }}

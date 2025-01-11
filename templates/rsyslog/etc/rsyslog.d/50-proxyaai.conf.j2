@@ -1,0 +1,72 @@
+# Rsyslog configuration for Proxy AAI
+
+## Reverseproxy
+if ( $syslogtag contains 'reverseproxy' ) then {
+    *.* action(type="omfile" file="{{ log_path }}/reverseproxy/reverseproxy.log")
+    stop
+}
+
+## ExaBGP
+if ( $syslogtag contains 'exabgp' ) then {
+    *.* action(type="omfile"  file="{{ log_path }}/exabgp/exabgp.log")
+    stop
+}
+
+## KRB Exchanger
+if ( $syslogtag contains 'krb-exchanger' ) then {
+    *.* action(type="omfile"  file="{{ log_path }}/krb_exchanger/krb_exchanger.log")
+    stop
+}
+
+## PGBouncers for MitreID
+if ( $syslogtag contains 'mitrepgbouncer' ) then {
+    *.* action(type="omfile" file="{{ log_path }}/mitrepgbouncer/mitrepgbouncer.log")
+    stop
+}
+
+## MitreID
+if ( $syslogtag contains 'mitreid' ) then {
+    *.* action(type="omfile"  file="{{ log_path }}/mitreid/mitreid.log")
+    stop
+}
+
+## PGBouncers for SimpleSAMLPHP
+if ( $syslogtag contains 'ssppgbouncer' ) then {
+    *.* action(type="omfile" file="{{ log_path }}/ssppgbouncer/ssppgbouncer.log")
+    stop
+}
+
+## SimpleSAMLphp
+set $!ssp_source = re_extract($msg, "([0-9]+.[0-9]+.[0-9]+.[0-9]+) ([a-zA-Z0-9._-]+) .*", 0, 2, "unknown");
+if $!ssp_source == "-" then {
+    set $!ssp_source = "unknown";
+}
+template (name="ssp_file" type="string" string="{{ log_path }}/simplesamlphp/%$!ssp_source%/%$!ssp_source%.log")
+if ( $syslogtag contains 'simplesamlphp' ) then {
+    *.* action(type="omfile"  dynaFile="ssp_file")
+    stop
+}
+
+## ExaBGP
+if ( $syslogtag contains 'exabgp' ) then {
+    *.* action(type="omfile"  file="{{ log_path }}/exabgp/exabgp.log")
+    stop
+}
+
+## ProxyIdP GUI
+if ( $syslogtag contains 'proxyidp_gui' ) then {
+    *.* action(type="omfile" file="{{ log_path }}/proxyidp_gui/proxyidp_gui.log")
+    stop
+}
+
+## MFAAPI
+if $programname == "mfaapi" then {
+    *.* action(type="omfile"  file="{{ log_path }}/mfa/mfaapi/mfaapi.log")
+    stop
+}
+
+## PGBouncers for MFA
+if ( $syslogtag contains 'mfapgbouncer' ) then {
+    *.* action(type="omfile"  file="{{ log_path }}/mfa/pgbouncer/mfapgbouncer.log")
+    stop
+}

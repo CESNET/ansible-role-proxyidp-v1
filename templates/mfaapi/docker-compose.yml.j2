@@ -1,0 +1,30 @@
+{{ ansible_managed | comment}}
+{% set config = mfaapi_template.docker_compose_yml %}
+
+services:
+  mfaapi:
+    image: {{ config.mfaapi.image }}
+    container_name: mfaapi
+    restart: always
+    networks:
+      - {{ config.network }}
+    volumes:
+      - /opt/mfaapi/config.json:/var/www/html/config.json:ro
+{% for volume in config.mfaapi.custom_volumes | default([]) %}
+      - {{ volume }}
+{% endfor %}
+    logging:
+      driver: "syslog"
+      options:
+        tag: "proxyaai/mfaapi"
+{% if config.extra_hosts is defined and config.extra_hosts %}
+    extra_hosts:
+{% for host in config.extra_hosts | default([]) %}
+      - {{ host }}
+{% endfor %}
+{% endif %}
+
+networks:
+  {{ config.network }}:
+    name: {{ config.network }}
+    external: true

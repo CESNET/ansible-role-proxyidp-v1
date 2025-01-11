@@ -1,0 +1,6 @@
+---
+# tasks file for cesnet.proxyaai
+
+- import_tasks: proxyaai.yml
+  tags:
+    - proxyaai

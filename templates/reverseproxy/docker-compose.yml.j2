@@ -1,0 +1,45 @@
+{{ ansible_managed | comment}}
+{% set config = reverseproxy_template.docker_compose_yml %}
+
+services:
+  reverseproxy:
+    image: {{ config.image }}
+    container_name: reverseproxy
+    restart: always
+    volumes:
+      - /opt/reverseproxy/etc/nginx/nginx-headers.conf:/etc/nginx/nginx-headers.conf:ro
+      - /opt/reverseproxy/etc/nginx/nginx-tls.conf:/etc/nginx/nginx-tls.conf:ro
+      - /opt/reverseproxy/etc/nginx/nginx-logging.conf:/etc/nginx/nginx-logging.conf:ro
+      - /opt/reverseproxy/etc/nginx/ffdhe2048.txt:/etc/nginx/ffdhe2048.txt:ro
+      - /opt/reverseproxy/etc/nginx/sites-enabled:/opt/bitnami/nginx/conf/server_blocks/:ro
+      - /opt/reverseproxy/etc/nginx/ssl:/etc/nginx/ssl/:ro
+{% for volume in config.custom_volumes | default([]) %}
+      - {{ volume }}
+{% endfor %}
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - {{ config.network }}
+    environment:
+      - NGINX_ENABLE_ABSOLUTE_REDIRECT=yes
+    ulimits:
+      nofile:
+        soft: "65536"
+        hard: "65536"
+    logging:
+      driver: "syslog"
+      options:
+        tag: "proxyaai/reverseproxy"
+networks:
+  {{ config.network }}:
+    name: {{ config.network }}
+    external: true
+
+volumes:
+  {% for item in config.external_volumes | default([]) -%}
+  {{ item.name }}:
+  {% if item.external == true %}
+  external: true
+  {% endif %}
+  {%- endfor %}

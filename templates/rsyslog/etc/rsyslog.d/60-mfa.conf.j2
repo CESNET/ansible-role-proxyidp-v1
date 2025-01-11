@@ -1,0 +1,17 @@
+## PGBouncers for MFA
+if ( $syslogtag contains 'mfapgbouncer' ) then {
+    *.* action(type="omfile"  file="{{ log_path }}/mfa/pgbouncer/mfapgbouncer.log")
+    stop
+}
+
+## MFAAPI
+if ( $syslogtag contains 'mfaapi' ) then {
+    *.* action(type="omfile"  file="{{ log_path }}/mfa/mfaapi/mfaapi.log")
+    stop
+}
+
+## PrivacyIDEA
+if ( $syslogtag contains 'privacyidea' ) then {
+    *.* action(type="omfile"  file="{{ log_path }}/mfa/privacyidea/privacyidea.log")
+    stop
+}

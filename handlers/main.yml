@@ -1,0 +1,50 @@
+---
+# handlers file for cesnet.proxyaai
+
+- name: "DOCKER - Restart docker "
+  ansible.builtin.service:
+    name: docker
+    state: restarted
+  listen: "docker restart"
+
+- name: "SIMPLESAMLPHP - Restart docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ simplesamlphp_path }}"
+    state: restarted
+  listen: "docker simplesamlphp restart"
+
+- name: "MITREID - Restart docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ mitreid_path }}"
+    state: restarted
+  listen: "docker mitreid restart"
+
+- name: "KRB EXCHANGER - Restart docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ krb_exchanger_path }}"
+    state: restarted
+  listen: "docker krb_exchanger restart"
+
+- name: "MFAAPI - Restart docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ mfaapi_path }}"
+    state: restarted
+  listen: "docker mfaapi restart"
+
+- name: "ProxyIdP GUI - Restart docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ proxyidp_gui_path }}"
+    state: restarted
+  listen: "docker proxyidp_gui restart"
+
+- name: "LDAP - Restart docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ ldap_path }}"
+    state: restarted
+  listen: "docker ldap restart"
+
+- name: "GA4GH BROKER - Restart docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ ga4gh_broker_path }}"
+    state: restarted
+  listen: "docker ga4gh_broker restart"

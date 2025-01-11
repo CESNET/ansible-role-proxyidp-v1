@@ -1,0 +1,96 @@
+---
+- name: "MITREID - Install packages"
+  apt:
+    name: "{{ item }}"
+    update_cache: true
+  when: mitreid_generate_keystore
+  loop:
+    - "openjdk-11-jre-headless"
+
+- name: "MITREID - Ensure that directory are created"
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0755') }}"
+    state: directory
+  loop: "{{ mitreid_dirs }}"
+
+- name: "MITREID - Copy files"
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ mitreid_path }}/{{ item.dest | default(item.src) }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop: "{{ mitreid_files }}"
+  notify: "docker mitreid restart"
+
+- name: "MITREID - Create files from template"
+  template:
+    src: "{{ item.src }}.j2"
+    dest: "{{ mitreid_path }}/{{ item.dest | default(item.src) }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default('0644') }}"
+  loop: "{{ mitreid_templates }}"
+  notify: "docker mitreid restart"
+
+- name: "MITREID - Generate keystore"
+  community.general.java_keystore:
+    name: oidc_sp
+    certificate_path: "{{ mitreid_keystore_cert_path }}"
+    private_key_path: "{{ mitreid_keystore_key_path }}"
+    password: "{{ mitreid_keystore_password }}"
+    dest: "{{ mitreid_keystore_path }}"
+  when: mitreid_generate_keystore
+  notify: "docker mitreid restart"
+
+- name: "MITREID - Create docker-compose.yml from template"
+  template:
+    src: "{{ mitreid_docker_compose_template }}.j2"
+    dest: "{{ mitreid_path }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - upgrade_docker_containers
+    - mitreid_upgrade_docker_container
+  notify: "docker mitreid restart"
+
+- name: "MITREID - site-specific tasks"
+  when: mitreid_site_specific_tasks is defined
+  include_tasks:
+    file: "files/{{ mitreid_site_specific_tasks }}"
+    apply:
+      tags:
+        - site_specific
+        - mitreid_site_specific
+  tags:
+    - site_specific
+    - mitreid_site_specific
+
+- name: "MITREID - Start docker image"
+  community.docker.docker_compose_v2:
+    project_src: "{{ mitreid_path }}"
+    state: present
+    pull: always
+    remove_orphans: true
+  tags:
+    - upgrade_docker_containers
+    - mitreid_upgrade_docker_container
+
+- name: "MITREID - Cronjobs"
+  cron:
+    name: "{{ item. name }}"
+    user: "{{ item.user|default('root') }}"
+    job: "{{ item.job }}"
+    hour: "{{ item.hour|default('*') }}"
+    minute: "{{ item.minute|default('*') }}"
+    state: "{{ item.state|default('present') }}"
+  loop: "{{ mitreid_cronjobs }}"
+
+- name: "MITREID - Force cronjobs when install"
+  shell: "{{ item.job }}"
+  when: force=="true"
+  loop: "{{ mitreid_cronjobs }}"

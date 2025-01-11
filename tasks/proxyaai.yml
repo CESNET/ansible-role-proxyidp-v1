@@ -1,0 +1,207 @@
+---
+- name: "Install packages"
+  apt:
+    name: "{{ packages }}"
+    update_cache: true
+  tags:
+    - packages
+
+- name: "Host users"
+  import_tasks: "host_users.yml"
+  tags:
+    - host_users
+
+- name: "Change default crontab timing"
+  import_tasks: "crontab.yml"
+  tags:
+    - crontab
+
+- name: "Prepare environment"
+  import_role:
+    name: cesnet.proxy_env
+  tags:
+    - prepare_environment
+
+- name: "Set time synchronization"
+  import_role:
+    name: cesnet.ntp
+  tags:
+    - ntp
+
+- name: "Set firewall"
+  import_role:
+    name: cesnet.firewall
+  tags:
+    - firewall
+  #notify: "docker restart"
+
+- name: "Add ssh keys to root"
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ root_ssh_keys }}"
+    exclusive: true
+  tags:
+    - ssh
+    - root_ssh
+
+- name: "Add extra hosts"
+  ansible.builtin.blockinfile:
+    dest: /etc/hosts
+    block: |
+      {% for item in stack_extra_hosts | default([]) -%}
+        {{ item }}
+      {% endfor %}
+  tags:
+    - extra_hosts
+
+- name: Disallow password authentication
+  lineinfile: dest=/etc/ssh/sshd_config
+    regexp="^PasswordAuthentication"
+    line="PasswordAuthentication no"
+    state=present
+
+- name: "set up Yubikeys"
+  import_role:
+    name: cesnet.yubikeys
+  tags:
+    - yubikeys
+
+- name: "Unattended upgrades"
+  import_role:
+    name: "cesnet.unattended_upgrades"
+  tags:
+    - unattended_upgrades
+
+- name: "Custom pre tasks"
+  when: site_specific_pre_tasks is defined
+  include_tasks:
+    file: "files/{{ site_specific_pre_tasks }}"
+    apply:
+      tags:
+        - site_specific
+        - site_specific_pre_tasks
+  tags:
+    - site_specific
+    - site_specific_pre_tasks
+
+- name: "DOCKER"
+  import_role:
+    name: cesnet.proxyaai_docker
+  tags:
+    - docker
+
+- name: "Monitoring"
+  import_role:
+    name: cesnet.metacentrum_monitoring
+  when: components_meta_monitoring == "enabled"
+  tags:
+    - metacentrum_monitoring
+
+- name: "Monitoring prepare probes"
+  import_tasks: "monitoring_probes.yml"
+  when: components_meta_monitoring == "enabled"
+  tags:
+    - metacentrum_monitoring
+
+- name: "RSYSLOG"
+  import_role:
+    name: cesnet.rsyslog
+  tags:
+    - rsyslog
+
+- name: "LOGROTATE"
+  import_role:
+    name: cesnet.logrotate
+  tags:
+    - logrotate
+
+- name: "Firewall - custom"
+  command: "{{ item }}"
+  loop: "{{ firewall_custom_rules }}"
+  tags:
+    - custom
+
+- name: "ExaBGP"
+  import_role:
+    name: cesnet.exabgp_docker
+  when: components_exabgp == "enabled"
+
+- name: "REVERSEPROXY"
+  import_role:
+    name: cesnet.reverseproxy_docker
+  tags:
+    - reverseproxy
+
+- name: "PGBOUNCERS"
+  import_role:
+    name: cesnet.pgbouncers_docker
+  when: components_pgbouncers == "enabled"
+  tags:
+    - pgbouncers
+
+- name: "SENDMAIL - SMTP setup for Dockerized environment"
+  import_role:
+    name: cesnet.sendmail_for_docker
+  tags:
+    - sendmail
+
+- name: "LDAP"
+  import_tasks: "ldap.yml"
+  when: components_ldap == "enabled"
+  tags:
+    - ldap
+
+- name: "ProxyIdP GUI"
+  import_tasks: "proxyidp_gui.yml"
+  when: components_proxyidp_gui == "enabled"
+  tags:
+    - proxyidp_gui
+
+- name: "SIMPLESAMLPHP"
+  import_tasks: "simplesamlphp.yml"
+  tags:
+    - simplesamlphp
+
+- name: "KRB_EXCHANGER"
+  import_tasks: "krb_exchanger.yml"
+  when: components_krb_exchanger == "enabled"
+  tags:
+    - krb_exchanger
+
+- name: "GA4GH_BROKER"
+  import_tasks: "ga4gh_broker.yml"
+  when: components_ga4gh_broker == "enabled"
+  tags:
+    - ga4gh_broker
+
+- name: "MITREID"
+  import_tasks: "mitreid.yml"
+  when: components_mitreid == "enabled"
+  tags:
+    - mitreid
+
+- name: "MFAAPI"
+  import_tasks: "mfaapi.yml"
+  when: components_mfaapi == "enabled"
+  tags:
+    - mfaapi
+
+- name: "PRIVACYIDEA"
+  import_role:
+    name: "cesnet.pi_docker"
+  when: components_privacyidea == "enabled"
+  tags:
+    - privacyidea
+
+- name: "Custom post tasks"
+  when: site_specific_post_tasks is defined
+  include_tasks:
+    file: "files/{{ site_specific_post_tasks }}"
+    apply:
+      tags:
+        - site_specific
+        - site_specific_post_tasks
+  tags:
+    - site_specific
+    - site_specific_post_tasks

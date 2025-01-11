@@ -1,0 +1,16 @@
+---
+{{ ansible_managed | comment }}
+{% set config = krb_exchanger_template.config_yml %}
+
+basic-auth:
+    username: {{ config.ba.user | default("user") }}
+    password: {{ config.ba.password | default("password") }}
+oidc:
+    well-known: {{ config.oidc.well_known_url }}
+    username-scope: {{ config.oidc.username_scope }}
+    username-claim: {{ config.oidc.username_claim }}
+    introspection:
+        client-id: {{ config.oidc.introspection.client_id }}
+        client-secret: {{ config.oidc.introspection.client_secret }}
+        required-scopes: [{{ config.oidc.required_scopes | join(',') }}]
+krb-realm: {{ config.krb_realm }}

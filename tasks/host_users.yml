@@ -1,0 +1,7 @@
+---
+- name: "Create users"
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid }}"
+    create_home: no
+  loop: "{{ host_users | default([]) }}"

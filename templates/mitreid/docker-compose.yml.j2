@@ -1,0 +1,32 @@
+{{ ansible_managed | comment}}
+{% set config = mitreid_template.docker_compose_yml %}
+
+services:
+  mitreid-tomcat:
+    image: {{ config.tomcat_image }}
+    container_name: mitreid-tomcat
+    volumes:
+      - {{ config.mitreid_path }}/etc/mitreid:/etc/mitreid
+      - {{ config.mitreid_path }}/etc/perun:/etc/perun
+{% for volume in config.custom_volumes | default([]) %}
+      - {{ volume }}
+{% endfor %}
+    restart: always
+    networks:
+      - {{ config.network }}
+    logging:
+      driver: "syslog"
+      options:
+        tag: "proxyaai/mitreid-tomcat"
+{% if config.extra_hosts is defined and config.extra_hosts %}
+    extra_hosts:
+{% for host in config.extra_hosts | default([]) %}
+      - {{ host }}
+{% endfor %}
+
+{% endif %}
+
+networks:
+  {{ config.network }}:
+    name: {{ config.network }}
+    external: true

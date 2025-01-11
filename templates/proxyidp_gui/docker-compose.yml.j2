@@ -1,0 +1,36 @@
+{{ ansible_managed | comment}}
+{% set config = proxyidp_gui_template.docker_compose_yml %}
+services:
+  proxyidp_gui:
+    image: "{{ config.proxyidp_gui_image }}"
+    container_name: proxyidp_gui
+    restart: always
+    volumes:
+      - {{ config.proxyidp_gui_path }}/perun.proxygui.yaml:/etc/perun.proxygui.yaml:ro
+      - {{ config.proxyidp_gui_path }}/microservices_global.yaml:/etc/microservices_global.yaml:ro
+      - {{ config.proxyidp_gui_path }}/smtp-login-email.txt:/etc/smtp-login-email.txt:ro
+      - {{ config.proxyidp_gui_path }}/backchannel-logout.yaml:/etc/backchannel-logout.yaml:ro
+      - {{ config.proxyidp_gui_path }}/graph_api.yaml:/etc/graph_api.yaml:ro
+      - {{ config.proxyidp_gui_path }}/oidc_private_jwks.json:/etc/jwks.json:ro
+      - {{ config.proxyidp_gui_path }}/attribute_map.yaml:/etc/attribute_map.yaml:ro
+      - {{ config.proxyidp_gui_path }}/mongodb_chain.pem:/usr/share/ca-certificates/extra/chain.crt:ro
+      - {{ config.proxyidp_gui_path }}/mongodb_certificate_and_key.pem:/opt/certificate_and_key.pem:ro
+      - {{ config.proxyidp_gui_path }}/mail-private.key:/opt/mail-private.key:ro
+      - {{ config.proxyidp_gui_path }}/mail-public.pem:/opt/mail-public.pem:ro
+    networks:
+      - {{ config.network }}
+    logging:
+      driver: "syslog"
+      options:
+        tag: "proxyaai/proxyidp_gui"
+{% if config.extra_hosts is defined and config.extra_hosts %}
+    extra_hosts:
+{% for host in config.extra_hosts | default([]) %}
+      - {{ host }}
+{% endfor %}
+{% endif %}
+
+networks:
+  {{ config.network }}:
+    name: {{ config.network }}
+    external: true
