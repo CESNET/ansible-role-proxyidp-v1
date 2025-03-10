@@ -23,6 +23,7 @@ brokers:
   jku: "{{ config.brokers.jku }}"
   issuer: "{{ config.brokers.issuer }}"
   path-to-jwk-file: "/etc/ga4gh-broker/jwks-keystore.jwks"
+  passport-repositories-timeout: "{{ config.brokers.passport_repositories_timeout }}"
   instances:
 {% for broker in config.brokers.instances | default([]) %}
     - name: "{{ broker.name }}"
