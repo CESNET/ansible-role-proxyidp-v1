@@ -1,6 +1,6 @@
 {{ log_path }}/mfa/*/*.log
 {
-        rotate 181
+        rotate {{ logrotate_files_count | default(181) }}
         dateext
         dateformat .%Y-%m-%d
         daily
