@@ -15,6 +15,6 @@
                 docker restart mfapgbouncer
                 docker restart oauth2proxy
                 docker restart oauth2proxymfa
-                invoke-rc.d rsyslog rotate > /dev/null
+                /usr/lib/rsyslog/rsyslog-rotate
         endscript
 }
