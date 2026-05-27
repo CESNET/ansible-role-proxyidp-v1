@@ -13,7 +13,7 @@
         sharedscripts
         postrotate
                 sleep $(shuf -i5-60 -n1) && docker restart krb-exchanger
-                invoke-rc.d rsyslog rotate > /dev/null
+                /usr/lib/rsyslog/rsyslog-rotate
         endscript
 }
 {% endif %}
@@ -33,7 +33,7 @@
         sharedscripts
         postrotate
                 sleep $(shuf -i5-60 -n1) && docker restart ga4gh_broker
-                invoke-rc.d rsyslog rotate > /dev/null
+                /usr/lib/rsyslog/rsyslog-rotate
         endscript
 }
 {% endif %}
@@ -53,7 +53,7 @@
         sharedscripts
         postrotate
                 sleep $(shuf -i5-60 -n1) && docker restart mitreid-tomcat
-                invoke-rc.d rsyslog rotate > /dev/null
+                /usr/lib/rsyslog/rsyslog-rotate
         endscript
 }
 {% endif %}
@@ -73,7 +73,7 @@
         sharedscripts
         postrotate
                 sleep $(shuf -i5-60 -n1) && docker restart simplesamlphp
-                invoke-rc.d rsyslog rotate > /dev/null
+                /usr/lib/rsyslog/rsyslog-rotate
         endscript
 }
 
@@ -92,7 +92,7 @@
         sharedscripts
         postrotate
                 sleep $(shuf -i5-60 -n1) && docker restart reverseproxy
-                invoke-rc.d rsyslog rotate > /dev/null
+                /usr/lib/rsyslog/rsyslog-rotate
         endscript
 }
 
@@ -111,7 +111,7 @@
         sharedscripts
         postrotate
                 sleep $(shuf -i5-60 -n1) && docker restart exabgp
-                invoke-rc.d rsyslog rotate > /dev/null
+                /usr/lib/rsyslog/rsyslog-rotate
         endscript
 }
 {% endif %}
@@ -132,7 +132,7 @@
         sharedscripts
         postrotate
                 sleep $(shuf -i5-60 -n1) && docker restart {{ pgbouncer }}
-                invoke-rc.d rsyslog rotate > /dev/null
+                /usr/lib/rsyslog/rsyslog-rotate
         endscript
 }
 {% endfor %}
