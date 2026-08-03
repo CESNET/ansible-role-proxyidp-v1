@@ -2,7 +2,7 @@
 # KRB Exchanger
 {{ log_path }}/krb_exchanger/krb_exchanger.log
 {
-        rotate 181
+        rotate {{ logrotate_files_count | default(181) }}
         dateext
         dateformat .%Y-%m-%d
         daily
@@ -22,7 +22,7 @@
 # GA4GH Broker
 {{ log_path }}/ga4gh_broker/ga4gh_broker.log
 {
-        rotate 181
+        rotate {{ logrotate_files_count | default(181) }}
         dateext
         dateformat .%Y-%m-%d
         daily
@@ -42,7 +42,7 @@
 # MitreID
 {{ log_path }}/mitreid/mitreid.log
 {
-        rotate 181
+        rotate {{ logrotate_files_count | default(181) }}
         dateext
         dateformat .%Y-%m-%d
         daily
@@ -62,7 +62,7 @@
 {{ log_path }}/simplesamlphp/*.log
 {{ log_path }}/simplesamlphp/*/*.log
 {
-        rotate 181
+        rotate {{ logrotate_files_count | default(181) }}
         dateext
         dateformat .%Y-%m-%d
         daily
@@ -81,7 +81,7 @@
 {{ log_path }}/reverseproxy/*.log
 {{ log_path }}/reverseproxy/*/*.log
 {
-        rotate 181
+        rotate {{ logrotate_files_count | default(181) }}
         dateext
         dateformat .%Y-%m-%d
         daily

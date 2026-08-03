@@ -28,6 +28,9 @@ firewall_custom_rules: []
 
 mfaapi_docker_compose_template: "mfaapi/docker-compose.yml"
 
+# Number of rotated log files to keep.
+logrotate_files_count: 181
+
 # List of cronjobs for MFA
 # - { name: "NAME", job: "CMD", minute: "MINUTE", hour: "HOUR"}
 mfa_cronjobs: []
