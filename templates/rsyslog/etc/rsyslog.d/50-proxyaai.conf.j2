@@ -70,3 +70,9 @@ if ( $syslogtag contains 'mfapgbouncer' ) then {
     *.* action(type="omfile"  file="{{ log_path }}/mfa/pgbouncer/mfapgbouncer.log")
     stop
 }
+
+## GA4GH broker
+if ( $syslogtag contains 'ga4gh_broker' ) then {
+    *.* action(type="omfile"  file="{{ log_path }}/ga4gh_broker/ga4gh_broker.log")
+    stop
+}
